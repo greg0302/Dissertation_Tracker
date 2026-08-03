@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dissertation — 8-Week Sprint</title>
+<style>
+  :root{
+    --ink:#0B1B2B; --ink-2:#1D3346; --muted:#5C7180; --faint:#8DA0AE;
+    --line:#DCE6EE; --grid:#E7EEF3; --panel:#F4F7FA; --surface:#FFFFFF;
+    --bg1:#F7FAFC; --bg2:#EAF1F5;
+    --signal:#12A594; --signal-deep:#0F8478; --phosphor:#6FE3CE;
+    --amber:#E0932E; --amber-bg:#FBEED4;
+    --slate:#93A6B4; --slate-bg:#EEF3F6;
+    --done-bg:#D3F3ED; --done-ink:#0C6B60;
+    --shadow: 0 1px 2px rgba(11,27,43,.05), 0 14px 34px -18px rgba(11,27,43,.22);
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--sans); color:var(--ink);
+    background:
+      radial-gradient(1200px 500px at 80% -10%, #ffffff 0%, rgba(255,255,255,0) 60%),
+      linear-gradient(160deg, var(--bg1), var(--bg2));
+    min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1140px; margin:0 auto; padding:26px 22px 60px}
+
+  /* ---------- top bar ---------- */
+  .topbar{display:flex; align-items:center; gap:18px; flex-wrap:wrap}
+  .brand{display:flex; align-items:center; gap:13px; min-width:0}
+  .mark{width:44px;height:44px;flex:0 0 auto}
+  .brand h1{font-size:19px; letter-spacing:-.02em; margin:0; line-height:1.1}
+  .brand .sub{font-family:var(--mono); font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-top:3px}
+  .spacer{flex:1 1 auto}
+  .controls{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  .btn{
+    font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+    border:1px solid var(--line); background:var(--surface); color:var(--ink-2);
+    padding:8px 12px; border-radius:9px; cursor:pointer; transition:.16s ease;
+  }
+  .btn:hover{border-color:var(--signal); color:var(--signal-deep)}
+  .btn.primary{background:var(--ink); color:#fff; border-color:var(--ink)}
+  .btn.primary:hover{background:var(--signal-deep); border-color:var(--signal-deep); color:#fff}
+
+  .weekstep{display:flex; align-items:center; gap:0; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:var(--surface)}
+  .weekstep button{border:0; background:transparent; padding:8px 11px; cursor:pointer; font-size:15px; color:var(--ink-2); line-height:1}
+  .weekstep button:hover{background:var(--panel)}
+  .weekstep .wk{font-family:var(--mono); font-size:11px; letter-spacing:.08em; padding:0 10px; text-transform:uppercase; color:var(--muted); white-space:nowrap}
+  .weekstep .wk b{color:var(--ink); font-size:13px}
+
+  /* ---------- tabs ---------- */
+  .tabs{display:flex; gap:4px; margin:22px 0 20px; background:var(--panel); border:1px solid var(--line); padding:4px; border-radius:12px; width:fit-content}
+  .tab{font-family:var(--mono); font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted);
+       padding:9px 15px; border-radius:8px; cursor:pointer; border:0; background:transparent; transition:.15s}
+  .tab:hover{color:var(--ink)}
+  .tab.active{background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(11,27,43,.08)}
+
+  .view{display:none; animation:fade .3s ease}
+  .view.active{display:block}
+  @keyframes fade{from{opacity:0; transform:translateY(4px)}to{opacity:1; transform:none}}
+
+  /* ---------- cards ---------- */
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow)}
+  .grid{display:grid; gap:16px}
+  .num{font-family:var(--mono); font-variant-numeric:tabular-nums; letter-spacing:-.01em}
+  .eyebrow{font-family:var(--mono); font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--faint)}
+
+  /* overview hero */
+  .hero{display:grid; grid-template-columns:300px 1fr; gap:0}
+  @media(max-width:820px){.hero{grid-template-columns:1fr}}
+  .hero .left{padding:30px 30px; border-right:1px solid var(--line); display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center}
+  @media(max-width:820px){.hero .left{border-right:0; border-bottom:1px solid var(--line)}}
+  .ring{position:relative; width:190px; height:190px}
+  .ring .pct{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center}
+  .ring .pct .big{font-size:46px; font-weight:700; letter-spacing:-.03em; line-height:1}
+  .ring .pct .lab{font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-top:4px}
+  .hero .left .stagesline{margin-top:16px; font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:.04em}
+  .hero .left .stagesline b{color:var(--ink)}
+
+  .hero .right{padding:26px 30px}
+  .statrow{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px}
+  @media(max-width:560px){.statrow{grid-template-columns:1fr}}
+  .stat{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px}
+  .stat .v{font-size:26px; font-weight:700; letter-spacing:-.02em; margin-top:2px}
+  .stat .v .of{font-size:14px; color:var(--faint); font-weight:600}
+  .stat .k{font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+
+  .chapbars{display:flex; flex-direction:column; gap:12px}
+  .cbar{display:grid; grid-template-columns:26px 1fr auto 52px; align-items:center; gap:12px}
+  .cbar .cidx{font-family:var(--mono); font-size:12px; color:var(--faint)}
+  .cbar .cname{font-size:13.5px; color:var(--ink-2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .cbar .track{grid-column:1 / -1; height:7px; background:var(--slate-bg); border-radius:99px; overflow:hidden; margin-top:-4px}
+  .cbar .fill{height:100%; width:0; background:linear-gradient(90deg,var(--signal),var(--phosphor)); border-radius:99px; transition:width .5s cubic-bezier(.22,.61,.36,1)}
+  .cbar .cpct{font-family:var(--mono); font-size:11.5px; color:var(--muted); text-align:right; font-variant-numeric:tabular-nums}
+  .wtag{font-family:var(--mono); font-size:10px; letter-spacing:.05em; color:var(--signal-deep); background:var(--done-bg); border:1px solid #b7e8de; padding:3px 7px; border-radius:6px; white-space:nowrap}
+  .bchap .bhead{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px}
+  .wedit{display:flex; align-items:center; gap:7px; flex:0 0 auto}
+  .wedit label{font-family:var(--mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint)}
+  .wedit input{width:72px; font-family:var(--mono); font-size:12px; text-align:right; border:1px solid var(--line); border-radius:7px; padding:6px 10px; color:var(--ink-2); background:var(--surface)}
+  .wedit input:focus{outline:2px solid rgba(18,165,148,.4); border-color:var(--signal)}
+  .wsum{font-family:var(--mono); font-size:10.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin:0 2px 4px}
+  .wsum.off{color:#b4541f}
+
+  /* section rows inside chapter (overview list) */
+  .chapterblock{padding:22px 26px}
+  .chapterblock + .chapterblock{border-top:1px solid var(--line)}
+  .chead{display:flex; align-items:baseline; gap:12px; margin-bottom:14px}
+  .chead .cnum{font-family:var(--mono); font-size:11px; letter-spacing:.14em; color:var(--signal-deep); text-transform:uppercase}
+  .chead h3{margin:0; font-size:16px; letter-spacing:-.01em}
+
+  .sec{display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:14px; padding:9px 0}
+  .sec + .sec{border-top:1px dashed var(--grid)}
+  .sec .stitle{font-size:14px; color:var(--ink-2)}
+  .sec .stitle .sid{font-family:var(--mono); font-size:11px; color:var(--faint); margin-right:8px}
+  .sec .meta{font-family:var(--mono); font-size:10px; color:var(--faint); letter-spacing:.05em; text-transform:uppercase; white-space:nowrap}
+  .chips{display:flex; gap:7px}
+  .chip{display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:10.5px; letter-spacing:.05em; text-transform:uppercase;
+        padding:6px 10px; border-radius:8px; border:1px solid var(--line); cursor:pointer; user-select:none; transition:.15s; background:var(--slate-bg); color:var(--muted)}
+  .chip .dot{width:8px;height:8px;border-radius:99px;background:var(--slate); transition:.15s}
+  .chip.s0{background:var(--slate-bg); color:var(--muted); border-color:var(--line)}
+  .chip.s0 .dot{background:var(--slate)}
+  .chip.s1{background:var(--amber-bg); color:#8a5a12; border-color:#f0dcae}
+  .chip.s1 .dot{background:var(--amber)}
+  .chip.s2{background:var(--done-bg); color:var(--done-ink); border-color:#a7e6da}
+  .chip.s2 .dot{background:var(--signal); box-shadow:0 0 0 3px rgba(18,165,148,.18)}
+  .chip:hover{transform:translateY(-1px)}
+  .chip .lab-role{opacity:.75}
+
+  .hrs{width:60px; font-family:var(--mono); font-size:12px; text-align:right; border:1px solid var(--line); border-radius:8px; padding:6px 8px; color:var(--ink-2); background:var(--surface)}
+  .hrs:focus{outline:2px solid rgba(18,165,148,.4); border-color:var(--signal)}
+
+  /* ---------- roadmap ---------- */
+  .roadmap{padding:34px 30px 40px}
+  .rmtitle{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:30px}
+  .rmtitle h2{margin:0; font-size:20px; letter-spacing:-.02em}
+  .timeline{position:relative; display:grid; grid-template-columns:repeat(8,1fr); gap:0; margin-top:10px}
+  .timeline .rail{position:absolute; left:0; right:0; top:19px; height:3px; background:var(--grid); border-radius:99px}
+  .timeline .railfill{position:absolute; left:0; top:19px; height:3px; background:linear-gradient(90deg,var(--signal),var(--phosphor)); border-radius:99px; transition:width .5s ease}
+  .wknode{position:relative; text-align:center; padding-top:0}
+  .wknode .node{width:40px;height:40px;border-radius:99px;margin:0 auto; background:var(--surface); border:3px solid var(--line);
+                display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:13px; color:var(--muted); position:relative; z-index:2; transition:.2s}
+  .wknode.done .node{border-color:var(--signal); color:var(--signal-deep); background:var(--done-bg)}
+  .wknode.current .node{border-color:var(--ink); color:var(--ink); box-shadow:0 0 0 5px rgba(11,27,43,.07)}
+  .wknode .wlab{font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); margin-top:8px}
+  .wknode .mile{font-size:11.5px; color:var(--ink-2); margin-top:7px; line-height:1.32; padding:0 6px; min-height:44px}
+  .wknode.done .mile{color:var(--ink)}
+  .wknode .check{color:var(--signal-deep); font-size:12px}
+  @media(max-width:760px){
+    .timeline{grid-template-columns:1fr; gap:0}
+    .timeline .rail,.timeline .railfill{display:none}
+    .wknode{display:grid; grid-template-columns:40px 1fr; gap:14px; text-align:left; padding:10px 0; border-top:1px dashed var(--grid); align-items:center}
+    .wknode .wlab{margin-top:0}
+    .wknode .mile{min-height:0; margin-top:2px}
+  }
+
+  /* ---------- weekly (present) ---------- */
+  .weekly{padding:32px 32px 38px}
+  .wkhead{display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:26px}
+  .wkhead .wknum{display:flex; align-items:baseline; gap:14px}
+  .wkhead .wknum .n{font-size:64px; font-weight:800; letter-spacing:-.04em; line-height:.9}
+  .wkhead .wknum .of{font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+  .wkhead .kpis{display:flex; gap:26px}
+  .wkhead .kpi .v{font-size:30px; font-weight:700; letter-spacing:-.02em}
+  .wkhead .kpi .k{font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+
+  .weekly .panels{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px}
+  @media(max-width:720px){.weekly .panels{grid-template-columns:1fr}}
+  .panel{border:1px solid var(--line); border-radius:14px; padding:18px 20px; background:var(--panel)}
+  .panel h4{margin:0 0 14px; font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+  .flist{display:flex; flex-direction:column; gap:10px}
+  .fitem{display:flex; align-items:center; gap:11px; font-size:14px; color:var(--ink-2)}
+  .fitem .st{width:9px;height:9px;border-radius:99px;flex:0 0 auto;background:var(--slate)}
+  .fitem .st.s1{background:var(--amber)} .fitem .st.s2{background:var(--signal); box-shadow:0 0 0 3px rgba(18,165,148,.16)}
+  .fitem .sid{font-family:var(--mono); font-size:11px; color:var(--faint)}
+  .fitem.upnext{color:var(--muted)}
+  .empty{font-size:13px; color:var(--faint); font-style:italic}
+
+  .scope{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:20px 22px}
+  .scope h4{margin:0 0 4px; font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+  .scope .cap{font-size:12px; color:var(--faint); margin-bottom:6px}
+  .legend{display:flex; gap:18px; margin-top:6px}
+  .legend span{font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:7px}
+  .legend i{width:16px;height:0;border-top-width:3px;border-top-style:solid; display:inline-block}
+
+  /* ---------- board ---------- */
+  .board{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px}
+  .bchap{padding:18px 20px}
+  .bchap h3{margin:0 0 3px; font-size:15px; letter-spacing:-.01em}
+  .bchap .ceye{font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--signal-deep); margin-bottom:14px}
+  .bsec{padding:12px 0}
+  .bsec + .bsec{border-top:1px dashed var(--grid)}
+  .bsec .bt{font-size:13.5px; color:var(--ink-2); margin-bottom:9px}
+  .bsec .bt .sid{font-family:var(--mono); font-size:11px; color:var(--faint); margin-right:7px}
+  .bsec .brow{display:flex; align-items:center; justify-content:space-between; gap:10px}
+
+  footer{margin-top:26px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+  footer .save{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--faint)}
+  footer .save b{color:var(--signal-deep)}
+
+  /* present mode */
+  body.present .tabs, body.present footer .links{display:none}
+  body.present .wrap{max-width:1240px}
+  body.present .topbar .brand .sub{opacity:.7}
+  body.present .weekly .wkhead .wknum .n{font-size:78px}
+
+  @media (prefers-reduced-motion: reduce){*{transition:none!important; animation:none!important}}
+  .hidden-file{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 44 44" fill="none" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="41" height="41" rx="11" fill="#0B1B2B"/>
+        <path id="markwave" d="M6 24 Q11 10 15 24 T24 24 T33 24 T42 24" stroke="#6FE3CE" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <path d="M6 30 Q11 22 15 30 T24 30 T33 30 T40 30" stroke="#12A594" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.55"/>
+      </svg>
+      <div>
+        <h1>Dissertation — 8-Week Sprint</h1>
+        <div class="sub">Guided-wave battery-state monitoring · framing text</div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="controls">
+      <div class="weekstep" title="Current week">
+        <button id="wkdown" aria-label="Previous week">−</button>
+        <span class="wk">Week&nbsp;<b id="wklabel">1</b>&nbsp;/&nbsp;8</span>
+        <button id="wkup" aria-label="Next week">+</button>
+      </div>
+      <button class="btn" id="exportBtn" title="Download a backup of your progress">Export</button>
+      <button class="btn" id="importBtn" title="Load progress from a JSON or CSV file">Import</button>
+      <button class="btn" id="syncBtn" title="Load the latest progress committed to the repo (works when hosted)">Latest</button>
+      <button class="btn primary" id="presentBtn">Present</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-view="overview">Overview</button>
+    <button class="tab" data-view="roadmap">Roadmap</button>
+    <button class="tab" data-view="weekly">Weekly</button>
+    <button class="tab" data-view="board">Board</button>
+  </div>
+
+  <!-- OVERVIEW -->
+  <section class="view active" id="overview">
+    <div class="card hero" style="margin-bottom:16px">
+      <div class="left">
+        <div class="ring">
+          <svg viewBox="0 0 190 190" width="190" height="190">
+            <circle cx="95" cy="95" r="82" fill="none" stroke="var(--slate-bg)" stroke-width="15"/>
+            <circle id="ringfill" cx="95" cy="95" r="82" fill="none" stroke="url(#rg)" stroke-width="15"
+                    stroke-linecap="round" transform="rotate(-90 95 95)" stroke-dasharray="515" stroke-dashoffset="515"/>
+            <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#12A594"/><stop offset="1" stop-color="#6FE3CE"/>
+            </linearGradient></defs>
+          </svg>
+          <div class="pct"><div class="big num" id="ovPct">0%</div><div class="lab">complete</div></div>
+        </div>
+        <div class="stagesline"><b id="ovStages">0</b> / 34 stages done</div>
+      </div>
+      <div class="right">
+        <div class="statrow">
+          <div class="stat"><div class="k">Literature</div><div class="v num"><span id="ovLit">0</span><span class="of"> / 17</span></div></div>
+          <div class="stat"><div class="k">Writing</div><div class="v num"><span id="ovWr">0</span><span class="of"> / 17</span></div></div>
+          <div class="stat"><div class="k">Hours logged</div><div class="v num" id="ovHrs">0</div></div>
+        </div>
+        <div class="eyebrow" style="margin-bottom:12px">Progress by chapter</div>
+        <div class="chapbars" id="chapbars"></div>
+      </div>
+    </div>
+    <div class="card" id="ovList"></div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section class="view" id="roadmap">
+    <div class="card roadmap">
+      <div class="rmtitle">
+        <h2>8-week roadmap</h2>
+        <div class="eyebrow">milestones complete automatically</div>
+      </div>
+      <div class="timeline" id="timeline">
+        <div class="rail"></div><div class="railfill" id="railfill"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WEEKLY -->
+  <section class="view" id="weekly">
+    <div class="card weekly">
+      <div class="wkhead">
+        <div class="wknum"><div class="n num" id="wkBig">1</div><div class="of">Week<br>of 8</div></div>
+        <div class="kpis">
+          <div class="kpi"><div class="v num" id="wkPct">0%</div><div class="k">complete</div></div>
+          <div class="kpi"><div class="v num" id="wkStages">0</div><div class="k">stages / 34</div></div>
+          <div class="kpi"><div class="v num" id="wkHrs">0</div><div class="k">hrs this week</div></div>
+        </div>
+      </div>
+      <div class="panels">
+        <div class="panel"><h4>This week's focus</h4><div class="flist" id="wkFocus"></div></div>
+        <div class="panel"><h4>Up next</h4><div class="flist" id="wkNext"></div></div>
+      </div>
+      <div class="scope">
+        <h4>Burn-up — stages completed</h4>
+        <div class="cap">Actual signal (teal) vs. planned reference (dashed). Extends as the weeks fill in.</div>
+        <div id="burnup"></div>
+        <div class="legend">
+          <span><i style="border-color:var(--signal)"></i>Actual</span>
+          <span><i style="border-color:var(--faint); border-top-style:dashed"></i>Plan</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BOARD -->
+  <section class="view" id="board">
+    <div class="board" id="boardgrid"></div>
+  </section>
+
+  <footer>
+    <div class="save">Auto-saved to this browser · <b id="saveState">ready</b></div>
+    <div class="links">
+      <button class="btn" id="resetBtn" title="Clear all progress">Reset</button>
+    </div>
+  </footer>
+</div>
+
+<input type="file" id="fileInput" class="hidden-file" accept=".json,.csv">
+
+<script>
+"use strict";
+
+/* ---------- data model ---------- */
+const CH = {
+  1:"Introduction",
+  2:"Lithium-Ion Batteries — State-Dependent Physics",
+  3:"Guided-Wave Sensing of Battery State",
+  4:"From Sensing to State Estimation & Monitoring",
+  5:"Synthesis and Discussion",
+  6:"Conclusion and Outlook"
+};
+const SECTIONS = [
+  {id:"1.2", ch:1, title:"Objectives and Research Questions", wk:1, est:3},
+  {id:"1.3", ch:1, title:"Outline", wk:1, est:1.5},
+  {id:"1.4", ch:1, title:"Author Contributions to the Articles", wk:1, est:2},
+  {id:"2.1", ch:2, title:"Structure and operating principle", wk:2, est:3},
+  {id:"2.2", ch:2, title:"Mechanical behaviour vs. state", wk:2, est:5},
+  {id:"2.3", ch:2, title:"Degradation with mechanical signatures", wk:3, est:6},
+  {id:"2.4", ch:2, title:"Safety and thermal runaway", wk:3, est:4},
+  {id:"3.1", ch:3, title:"Lamb / guided-wave fundamentals", wk:4, est:6},
+  {id:"3.3", ch:3, title:"Piezoelectric transducers", wk:4, est:4},
+  {id:"3.2", ch:3, title:"Dispersion in layered / multilayer structures", wk:5, est:6},
+  {id:"3.4", ch:3, title:"Coupling wave propagation to cell state", wk:5, est:5},
+  {id:"4.1", ch:4, title:"State estimation and limits of conventional BMS", wk:6, est:4},
+  {id:"4.2", ch:4, title:"Other mechanical-sensing methods: strain gages & FBG", wk:6, est:4},
+  {id:"4.3", ch:4, title:"Ultrasonic / guided-wave BMS and module monitoring", wk:6, est:3},
+  {id:"5",   ch:5, title:"Synthesis and Discussion  (RQs answered here)", wk:7, est:7},
+  {id:"1.1", ch:1, title:"Motivation  (write last, once body exists)", wk:8, est:3},
+  {id:"6",   ch:6, title:"Conclusion and Outlook", wk:8, est:3}
+];
+const PLAN = {1:6,2:10,3:14,4:18,5:22,6:28,7:30,8:34}; // cumulative stage targets
+const MILESTONES = {
+  1:{label:"Spine locked", test:s=>done(["1.2","1.3","1.4"])},
+  3:{label:"Battery physics done (Ch.2)", test:s=>chapDone(2)},
+  5:{label:"Core method done (Ch.3)", test:s=>chapDone(3)},
+  6:{label:"All body chapters drafted", test:s=>chapDone(2)&&chapDone(3)&&chapDone(4)},
+  7:{label:"Research questions answered", test:s=>chapDone(5)},
+  8:{label:"First draft to supervisor", test:s=>SECTIONS.every(x=>ST(x.id).lit===2&&ST(x.id).wr===2)}
+};
+const STATUS_LABEL = ["Not started","In progress","Done"];
+const DEFAULT_WEIGHTS = {1:0.14, 2:0.26, 3:0.30, 4:0.16, 5:0.10, 6:0.04};
+const KEY = "diss_tracker_v1";
+
+/* ---------- state ---------- */
+const _saved = load();
+let state = _saved || freshState();
+if(!state.weights) state.weights=Object.assign({},DEFAULT_WEIGHTS);
+function freshState(){
+  const st={status:{},hours:{},currentWeek:1,actual:{},weights:Object.assign({},DEFAULT_WEIGHTS)};
+  SECTIONS.forEach(s=>{st.status[s.id]={lit:0,wr:0}; st.hours[s.id]=0;});
+  return st;
+}
+function load(){ try{const r=localStorage.getItem(KEY); return r?JSON.parse(r):null;}catch(e){return null;} }
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); flash("saved"); }
+  catch(e){ flash("save off — use Export", true); }
+}
+let flashT;
+function flash(msg,warn){ const el=document.getElementById("saveState"); if(!el)return;
+  el.textContent=msg; el.style.color= warn?"#b4541f":""; clearTimeout(flashT);
+  flashT=setTimeout(()=>{el.textContent="up to date";}, 1400);
+}
+
+/* ---------- helpers ---------- */
+function ST(id){ return state.status[id] || {lit:0,wr:0}; }
+function done(ids){ return ids.every(id=>ST(id).lit===2 && ST(id).wr===2); }
+function chapSecs(ch){ return SECTIONS.filter(s=>s.ch===ch); }
+function chapDone(ch){ return chapSecs(ch).every(s=>ST(s.id).lit===2 && ST(s.id).wr===2); }
+function stagesDone(){ let n=0; SECTIONS.forEach(s=>{const t=ST(s.id); if(t.lit===2)n++; if(t.wr===2)n++;}); return n; }
+function litDone(){ return SECTIONS.filter(s=>ST(s.id).lit===2).length; }
+function wrDone(){ return SECTIONS.filter(s=>ST(s.id).wr===2).length; }
+function hoursLogged(){ return SECTIONS.reduce((a,s)=>a+(Number(state.hours[s.id])||0),0); }
+function fmtHrs(h){ return (Math.round(h*10)/10).toString(); }
+function weightSum(){ return Object.keys(CH).reduce((a,ch)=>a+(Number(state.weights[ch])||0),0); }
+function chapterCompletion(ch){ const secs=chapSecs(ch); const tot=secs.length*2; if(!tot)return 0;
+  let d=0; secs.forEach(s=>{const t=ST(s.id); if(t.lit===2)d++; if(t.wr===2)d++;}); return d/tot; }
+function weightedPct(){ const ws=weightSum(); if(ws<=0) return 0;
+  let acc=0; Object.keys(CH).forEach(ch=>{ acc += (Number(state.weights[ch])||0)/ws * chapterCompletion(+ch); });
+  return Math.round(acc*100); }
+
+/* ---------- mutations ---------- */
+function cycle(id, role){ // role 'lit' | 'wr'
+  const t = state.status[id]; t[role] = (t[role]+1)%3;
+  snapshot(); save(); renderAll();
+}
+function setHours(id,val){ state.hours[id]=Math.max(0, Number(val)||0); snapshot(); save(); renderStatsOnly(); }
+function setWeight(ch,val){ state.weights[ch]=Math.max(0, Number(val)||0); save(); renderAll(); }
+function snapshot(){ // auto-record actual cumulative at current week
+  state.actual[state.currentWeek] = stagesDone();
+}
+function setWeek(w){ state.currentWeek=Math.min(8,Math.max(1,w)); snapshot(); save(); renderAll(); }
+
+/* ---------- rendering ---------- */
+function chip(id, role){
+  const v = ST(id)[role];
+  const roleLab = role==="lit" ? "Lit" : "Write";
+  return `<button class="chip s${v}" data-id="${id}" data-role="${role}" title="${roleLab}: ${STATUS_LABEL[v]} — click to change">
+    <span class="dot"></span><span class="lab-role">${roleLab}</span></button>`;
+}
+
+function renderStatsOnly(){
+  const sd=stagesDone(), pct=weightedPct();
+  document.getElementById("ovPct").textContent=pct+"%";
+  document.getElementById("ovStages").textContent=sd;
+  document.getElementById("ovLit").textContent=litDone();
+  document.getElementById("ovWr").textContent=wrDone();
+  document.getElementById("ovHrs").textContent=fmtHrs(hoursLogged());
+  const off = 515 - (515*pct/100);
+  document.getElementById("ringfill").style.strokeDashoffset=off;
+}
+
+function renderOverview(){
+  renderStatsOnly();
+  // chapter bars
+  const cb=document.getElementById("chapbars"); cb.innerHTML="";
+  Object.keys(CH).forEach(ch=>{
+    const p = Math.round(chapterCompletion(+ch)*100);
+    const w = (Number(state.weights[ch])||0).toFixed(2);
+    const el=document.createElement("div"); el.className="cbar";
+    el.innerHTML=`<div class="cidx">${ch}</div><div class="cname">${CH[ch]}</div>
+      <div class="wtag" title="chapter weight (edit on the Board tab)">w ${w}</div>
+      <div class="cpct">${p}%</div>
+      <div class="track"><div class="fill" style="width:${p}%"></div></div>`;
+    cb.appendChild(el);
+  });
+  // list by chapter
+  const list=document.getElementById("ovList"); list.innerHTML="";
+  Object.keys(CH).forEach(ch=>{
+    const block=document.createElement("div"); block.className="chapterblock";
+    let rows="";
+    chapSecs(+ch).forEach(s=>{
+      rows+=`<div class="sec">
+        <div class="stitle"><span class="sid">${s.id}</span>${s.title}</div>
+        <div class="chips">${chip(s.id,"lit")}${chip(s.id,"wr")}</div>
+        <div class="meta">wk ${s.wk} · ~${fmtHrs(s.est)}h</div>
+      </div>`;
+    });
+    block.innerHTML=`<div class="chead"><span class="cnum">Chapter ${ch}</span><h3>${CH[ch]}</h3></div>${rows}`;
+    list.appendChild(block);
+  });
+}
+
+function renderRoadmap(){
+  const tl=document.getElementById("timeline");
+  [...tl.querySelectorAll(".wknode")].forEach(n=>n.remove());
+  const cur=state.currentWeek;
+  let lastDone=0;
+  for(let w=1; w<=8; w++){
+    const m=MILESTONES[w]; const isDone = m? m.test():false;
+    if(isDone) lastDone=w;
+    const node=document.createElement("div");
+    node.className="wknode"+(isDone?" done":"")+(w===cur?" current":"");
+    node.innerHTML=`<div class="node">${isDone?'<span class="check">✓</span>':w}</div>
+      <div class="wlab">Week ${w}</div>
+      <div class="mile">${m?m.label:""}${isDone?'':''}</div>`;
+    tl.appendChild(node);
+  }
+  const rf=document.getElementById("railfill");
+  rf.style.width = (lastDone? ( (lastDone-1)/7*100 ):0) + "%";
+}
+
+function renderWeekly(){
+  const cur=state.currentWeek, sd=stagesDone();
+  document.getElementById("wkBig").textContent=cur;
+  document.getElementById("wklabel").textContent=cur;
+  document.getElementById("wkPct").textContent=weightedPct()+"%";
+  document.getElementById("wkStages").textContent=sd;
+  const hrsWeek=SECTIONS.filter(s=>s.wk===cur).reduce((a,s)=>a+(Number(state.hours[s.id])||0),0);
+  document.getElementById("wkHrs").textContent=fmtHrs(hrsWeek);
+
+  const focus=document.getElementById("wkFocus");
+  const fsecs=SECTIONS.filter(s=>s.wk===cur);
+  focus.innerHTML = fsecs.length? fsecs.map(s=>{
+    const t=ST(s.id); const lvl=Math.max(t.lit,t.wr)===2 && t.lit===2&&t.wr===2 ?2 : (t.lit>0||t.wr>0?1:0);
+    return `<div class="fitem"><span class="st s${lvl}"></span><span class="sid">${s.id}</span>${s.title}</div>`;
+  }).join("") : '<div class="empty">No sections planned this week.</div>';
+
+  const next=document.getElementById("wkNext");
+  const nsecs=SECTIONS.filter(s=>s.wk===cur+1);
+  next.innerHTML = nsecs.length? nsecs.map(s=>
+    `<div class="fitem upnext"><span class="st"></span><span class="sid">${s.id}</span>${s.title}</div>`
+  ).join("") : (cur>=8? '<div class="empty">Final week — draft goes to supervisor.</div>':'<div class="empty">Nothing queued.</div>');
+
+  document.getElementById("burnup").innerHTML=burnupSVG();
+}
+
+function burnupSVG(){
+  const W=680,H=230, pl=40, pr=16, pt=16, pb=34;
+  const x=w=> pl + (w/8)*(W-pl-pr);
+  const y=v=> H-pb - (v/34)*(H-pt-pb);
+  // grid
+  let g="";
+  [0,17,34].forEach(v=>{ g+=`<line x1="${pl}" y1="${y(v)}" x2="${W-pr}" y2="${y(v)}" stroke="var(--grid)" stroke-width="1"/>
+    <text x="${pl-8}" y="${y(v)+4}" text-anchor="end" font-family="var(--mono)" font-size="10" fill="var(--faint)">${v}</text>`; });
+  for(let w=1;w<=8;w++){ g+=`<text x="${x(w)}" y="${H-pb+18}" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--faint)">W${w}</text>`; }
+  // plan line (through origin + targets)
+  let planPts=`${x(0)},${y(0)} `;
+  for(let w=1;w<=8;w++) planPts+=`${x(w)},${y(PLAN[w])} `;
+  // actual line: origin + recorded weeks up to current
+  let actPts=`${x(0)},${y(0)} `; let dots="";
+  for(let w=1; w<=state.currentWeek; w++){
+    if(state.actual[w]!==undefined){
+      actPts+=`${x(w)},${y(state.actual[w])} `;
+      dots+=`<circle cx="${x(w)}" cy="${y(state.actual[w])}" r="3.5" fill="var(--signal)"/>`;
+    }
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-height:250px" role="img" aria-label="Burn-up chart">
+    ${g}
+    <polyline points="${planPts}" fill="none" stroke="var(--faint)" stroke-width="1.6" stroke-dasharray="5 5" opacity="0.7"/>
+    <polyline points="${actPts}" fill="none" stroke="var(--signal)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"
+      filter="drop-shadow(0 2px 5px rgba(18,165,148,.35))"/>
+    ${dots}
+  </svg>`;
+}
+
+function renderBoard(){
+  const g=document.getElementById("boardgrid"); g.innerHTML="";
+  const ws=weightSum();
+  const hint=document.createElement("div");
+  hint.className="wsum"+(Math.abs(ws-1)>0.001?" off":"");
+  hint.style.gridColumn="1 / -1";
+  hint.textContent=`Chapter weights sum: ${ws.toFixed(2)} — auto-normalized, but 1.00 keeps it tidy`;
+  g.appendChild(hint);
+  Object.keys(CH).forEach(ch=>{
+    const card=document.createElement("div"); card.className="card bchap";
+    let rows="";
+    chapSecs(+ch).forEach(s=>{
+      rows+=`<div class="bsec">
+        <div class="bt"><span class="sid">${s.id}</span>${s.title}</div>
+        <div class="brow">
+          <div class="chips">${chip(s.id,"lit")}${chip(s.id,"wr")}</div>
+          <input class="hrs" type="number" min="0" step="0.5" value="${fmtHrs(state.hours[s.id]||0)}"
+                 data-hrs="${s.id}" title="Actual hours" aria-label="Actual hours for ${s.id}">
+        </div>
+      </div>`;
+    });
+    card.innerHTML=`<div class="bhead">
+        <div><div class="ceye">Chapter ${ch}</div><h3>${CH[ch]}</h3></div>
+        <div class="wedit"><label>weight</label>
+          <input type="number" min="0" step="0.01" value="${(Number(state.weights[ch])||0).toFixed(2)}"
+                 data-weight="${ch}" title="Chapter weight" aria-label="Weight for chapter ${ch}"></div>
+      </div>${rows}`;
+    g.appendChild(card);
+  });
+}
+
+function renderAll(){ renderOverview(); renderRoadmap(); renderWeekly(); renderBoard(); }
+
+/* ---------- events (delegated) ---------- */
+document.addEventListener("click", e=>{
+  const c=e.target.closest(".chip");
+  if(c){ cycle(c.dataset.id, c.dataset.role); return; }
+});
+document.addEventListener("change", e=>{
+  if(e.target.matches("[data-hrs]")){ setHours(e.target.dataset.hrs, e.target.value); }
+  else if(e.target.matches("[data-weight]")){ setWeight(e.target.dataset.weight, e.target.value); }
+});
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");
+  document.getElementById(t.dataset.view).classList.add("active");
+}));
+document.getElementById("wkup").onclick=()=>setWeek(state.currentWeek+1);
+document.getElementById("wkdown").onclick=()=>setWeek(state.currentWeek-1);
+
+document.getElementById("presentBtn").onclick=()=>{
+  const on=document.body.classList.toggle("present");
+  const btn=document.getElementById("presentBtn"); btn.textContent= on?"Exit":"Present";
+  if(on){ document.getElementById("weekly").classList.add("active");
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelector('.tab[data-view="weekly"]').classList.add("active");
+    document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+    document.getElementById("weekly").classList.add("active");
+    if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+  } else { if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }
+};
+document.addEventListener("fullscreenchange",()=>{
+  if(!document.fullscreenElement && document.body.classList.contains("present")){
+    document.body.classList.remove("present"); document.getElementById("presentBtn").textContent="Present";
+  }
+});
+
+/* export / import */
+document.getElementById("exportBtn").onclick=()=>{
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download=`progress.json`; a.click(); URL.revokeObjectURL(a.href);
+  flash("exported");
+};
+document.getElementById("importBtn").onclick=()=>document.getElementById("fileInput").click();
+document.getElementById("fileInput").onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+    if(f.name.toLowerCase().endsWith(".csv")) importCSV(r.result);
+    else { const obj=JSON.parse(r.result); if(obj&&obj.status){ state=migrate(obj); } }
+    snapshot(); save(); renderAll(); flash("imported");
+  }catch(err){ flash("import failed — check file", true); } };
+  r.readAsText(f); e.target.value="";
+};
+function migrate(obj){
+  const st=freshState();
+  SECTIONS.forEach(s=>{
+    if(obj.status&&obj.status[s.id]) st.status[s.id]={lit:+obj.status[s.id].lit||0, wr:+obj.status[s.id].wr||0};
+    if(obj.hours&&obj.hours[s.id]!=null) st.hours[s.id]=+obj.hours[s.id]||0;
+  });
+  st.currentWeek=Math.min(8,Math.max(1,+obj.currentWeek||1));
+  st.actual=obj.actual&&typeof obj.actual==="object"?obj.actual:{};
+  if(obj.weights&&typeof obj.weights==="object"){ Object.keys(CH).forEach(ch=>{ if(obj.weights[ch]!=null) st.weights[ch]=+obj.weights[ch]||0; }); }
+  return st;
+}
+function importCSV(text){
+  const codeOf=t=>{ t=(t||"").trim().toLowerCase();
+    if(t.startsWith("done")) return 2; if(t.startsWith("in")) return 1; return 0; };
+  const lines=text.split(/\r?\n/).filter(x=>x.trim());
+  const header=lines.shift().split(",").map(h=>h.trim().toLowerCase());
+  const iSec=header.findIndex(h=>h.includes("section")||h==="sec"||h==="id");
+  const iLit=header.findIndex(h=>h.includes("lit"));
+  const iWr=header.findIndex(h=>h.includes("writ"));
+  const iHr=header.findIndex(h=>h.includes("hour")||h.includes("actual"));
+  lines.forEach(line=>{
+    const c=line.split(","); const id=(c[iSec]||"").trim();
+    if(state.status[id]){
+      if(iLit>=0) state.status[id].lit=codeOf(c[iLit]);
+      if(iWr>=0) state.status[id].wr=codeOf(c[iWr]);
+      if(iHr>=0) state.hours[id]=Math.max(0,Number((c[iHr]||"").trim())||0);
+    }
+  });
+}
+document.getElementById("resetBtn").onclick=()=>{
+  if(confirm("Clear all progress and start fresh? Export first if you want a backup.")){
+    state=freshState(); save(); renderAll(); flash("reset");
+  }
+};
+
+/* repo sync: pull latest committed progress.json */
+function pullFromRepo(manual){
+  if(typeof fetch!=="function"){ if(manual) flash("sync not supported here", true); return; }
+  if(location.protocol==="file:"){ if(manual) flash("works only when hosted", true); return; }
+  fetch("progress.json",{cache:"no-store"}).then(r=>{ if(!r.ok) throw 0; return r.json(); })
+    .then(obj=>{ if(obj&&obj.status){
+      if(manual && stagesDone()>0 && !confirm("Replace this browser's progress with the latest from the repo?")) return;
+      state=migrate(obj); snapshot(); save(); renderAll(); flash("synced from repo");
+    } else if(manual){ flash("no progress found", true); } })
+    .catch(()=>{ if(manual) flash("no progress.json in repo", true); });
+}
+document.getElementById("syncBtn").onclick=()=>pullFromRepo(true);
+
+/* ---------- init ---------- */
+document.getElementById("wklabel").textContent=state.currentWeek;
+snapshot(); renderAll();
+if(!_saved) pullFromRepo(false); // first visit on a device: show committed progress if present
+setTimeout(()=>{ document.getElementById("ringfill").style.transition="stroke-dashoffset .9s cubic-bezier(.22,.61,.36,1)"; renderStatsOnly(); }, 60);
+flash("ready");
+</script>
+</body>
+</html>
